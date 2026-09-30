@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Chatbot - Groq GPT-OSS</title>
+  <title> ThnhRealKidAI - LGT-OSS</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -26,23 +26,32 @@
 
 <body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100 min-h-screen flex font-sans overflow-hidden">
 
-  <!-- SIDEBAR BÊN TRÁI LƯU LỊCH SỬ CÁC CHỦ ĐỀ -->
-  <aside id="sidebar" class="w-64 bg-gray-100 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col justify-between shrink-0 transition-all duration-300">
+  <!-- OVERLAY ĐEN LÓT NỀN KHI MỞ MENU TRÊN ĐIỆN THOẠI -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
+
+  <!-- SIDEBAR BÊN TRÁI -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-72 bg-gray-100 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col justify-between shrink-0 transition-transform duration-300 -translate-x-full md:translate-x-0 md:static">
     <div class="p-3 flex flex-col h-full">
-      <!-- Nút Tạo Chat Mới -->
-      <button id="btn-new-chat" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition mb-4">
-        <i class="fa-solid fa-plus text-sm"></i>
-        <span>Đoạn chat mới</span>
-      </button>
+      <!-- Header Sidebar + Nút Đóng X -->
+      <div class="flex items-center justify-between mb-3">
+        <button id="btn-new-chat" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition">
+          <i class="fa-solid fa-plus text-sm"></i>
+          <span>Đoạn chat mới</span>
+        </button>
+        <!-- Nút Đóng Sidebar (Chỉ hiện trên điện thoại) -->
+        <button id="btn-close-sidebar" class="md:hidden ml-2 p-2.5 rounded-xl text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
 
       <!-- Danh sách lịch sử chủ đề -->
       <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 px-2 mb-2 uppercase tracking-wider">Lịch sử trò chuyện</div>
       <div id="history-list" class="flex-1 overflow-y-auto space-y-1 pr-1">
-        <!-- Các chủ đề được tự động thêm bằng JS -->
+        <!-- Các chủ đề được thêm bằng JS -->
       </div>
     </div>
 
-    <!-- Nút Đổi Giao Diện Sáng/Tối bên dưới Sidebar -->
+    <!-- Nút Đổi Giao Diện -->
     <div class="p-3 border-t border-gray-200 dark:border-slate-700 flex justify-between items-center">
       <span class="text-xs text-gray-500">Giao diện</span>
       <button id="btn-theme" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700">
@@ -53,36 +62,36 @@
   </aside>
 
   <!-- KHUNG CHAT CHÍNH BÊN PHẢI -->
-  <div class="flex-1 flex flex-col h-screen overflow-hidden">
+  <div class="flex-1 flex flex-col h-screen overflow-hidden w-full">
     <!-- Header -->
     <header class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-3.5 flex justify-between items-center z-10 shadow-sm">
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-3 min-w-0">
         <button id="btn-toggle-sidebar" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
-        <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+        <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0">
           <i class="fa-solid fa-brain"></i>
         </div>
-        <div>
-          <h1 id="current-chat-title" class="font-bold text-base leading-tight truncate max-w-xs sm:max-w-md">Đoạn chat mới</h1>
-          <p class="text-xs text-gray-500 dark:text-gray-400">ThnhRealKid LGBT-OSS 120B (1m cho API)</p>
+        <div class="min-w-0">
+          <h1 id="current-chat-title" class="font-bold text-base leading-tight truncate">Đoạn chat mới</h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400">ThnhRealKid LGBT-OSS 120B</p>
         </div>
       </div>
 
-      <button id="btn-delete-current" class="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30" title="Xóa cuộc trò chuyện này">
+      <button id="btn-delete-current" class="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 shrink-0" title="Xóa cuộc trò chuyện này">
         <i class="fa-solid fa-trash text-base"></i>
       </button>
     </header>
 
     <!-- Khu vực hiển thị tin nhắn -->
-    <main class="flex-1 p-4 overflow-y-auto flex flex-col max-w-4xl w-full mx-auto" id="chat-container">
+    <main class="flex-1 p-3 md:p-4 overflow-y-auto flex flex-col max-w-4xl w-full mx-auto" id="chat-container">
       <div id="chat-messages" class="flex-1 space-y-4 mb-4">
-        <div id="welcome-box" class="text-center py-16 space-y-4">
+        <div id="welcome-box" class="text-center py-12 space-y-4">
           <div class="w-16 h-16 bg-orange-100 dark:bg-orange-950/50 text-orange-500 rounded-full flex items-center justify-center mx-auto text-3xl">
             <i class="fa-solid fa-robot"></i>
           </div>
-          <h2 class="text-2xl font-bold">Xin chào! Bạn cần hỗ trợ chủ đề gì hôm nay?</h2>
-          <p class="text-gray-500 text-sm max-w-md mx-auto">Nhập câu hỏi bất kỳ, cuộc trò chuyện sẽ tự động được lưu tên chủ đề vào thanh danh sách bên trái!</p>
+          <h2 class="text-xl md:text-2xl font-bold px-2">Xin chào! Bạn cần hỗ trợ chủ đề gì hôm nay?</h2>
+          <p class="text-gray-500 text-sm max-w-md mx-auto px-4">Nhập câu hỏi bất kỳ, cuộc trò chuyện sẽ tự động được lưu tên chủ đề vào menu bên trái!</p>
         </div>
       </div>
 
