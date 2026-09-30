@@ -1,13 +1,10 @@
-// Cấu hình Groq API
 const GROQ_API_KEY = "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";
 const SELECTED_MODEL = "openai/gpt-oss-120b";
 
-// Biến trạng thái
 let chats = JSON.parse(localStorage.getItem('ai_chats_history')) || [];
 let currentChatId = null;
 let isGenerating = false;
 
-// Khai báo phần tử DOM
 const chatMessages = document.getElementById('chat-messages');
 const welcomeBox = document.getElementById('welcome-box');
 const chatForm = document.getElementById('chat-form');
@@ -15,15 +12,37 @@ const userInput = document.getElementById('user-input');
 const historyList = document.getElementById('history-list');
 const currentChatTitle = document.getElementById('current-chat-title');
 const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-// Sự kiện nút chuyển chủ đề Sáng/Tối và Đóng/Mở Sidebar
+// Xử lý bật/tắt Sidebar chuẩn Mobile
+function openSidebar() {
+  sidebar.classList.remove('-translate-x-full');
+  sidebarOverlay.classList.remove('hidden');
+}
+
+function closeSidebar() {
+  sidebar.classList.add('-translate-x-full');
+  sidebarOverlay.classList.add('hidden');
+}
+
+document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+  if (sidebar.classList.contains('-translate-x-full')) {
+    openSidebar();
+  } else {
+    closeSidebar();
+  }
+});
+
+document.getElementById('btn-close-sidebar').addEventListener('click', closeSidebar);
+sidebarOverlay.addEventListener('click', closeSidebar);
+
 document.getElementById('btn-theme').addEventListener('click', () => document.documentElement.classList.toggle('dark'));
-document.getElementById('btn-toggle-sidebar').addEventListener('click', () => sidebar.classList.toggle('hidden'));
 
-// Tạo cuộc trò chuyện mới
-document.getElementById('btn-new-chat').addEventListener('click', createNewChat);
+document.getElementById('btn-new-chat').addEventListener('click', () => {
+  createNewChat();
+  if (window.innerWidth < 768) closeSidebar();
+});
 
-// Xóa cuộc trò chuyện hiện tại
 document.getElementById('btn-delete-current').addEventListener('click', () => {
   if (!currentChatId) return;
   chats = chats.filter(c => c.id !== currentChatId);
@@ -59,7 +78,10 @@ function renderHistoryList() {
     const isActive = chat.id === currentChatId;
     btn.className = `w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium truncate flex items-center gap-2 transition ${isActive ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'}`;
     btn.innerHTML = `<i class="fa-regular fa-message text-xs opacity-70"></i> <span class="truncate">${chat.title}</span>`;
-    btn.onclick = () => loadChat(chat.id);
+    btn.onclick = () => {
+      loadChat(chat.id);
+      if (window.innerWidth < 768) closeSidebar();
+    };
     historyList.appendChild(btn);
   });
 }
@@ -83,15 +105,13 @@ function loadChat(chatId) {
   }
 }
 
-// Tự động rút gọn tiêu đề chủ đề
 function generateTitle(firstText) {
-  if (firstText.length > 30) {
-    return firstText.substring(0, 28) + "...";
+  if (firstText.length > 25) {
+    return firstText.substring(0, 23) + "...";
   }
   return firstText;
 }
 
-// Bắt sự kiện gõ Enter (tránh lỗi bộ gõ tiếng Việt)
 userInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
     e.preventDefault();
@@ -119,11 +139,11 @@ function appendMessageUI(role, content) {
   const msgDiv = document.createElement('div');
   msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
   msgDiv.innerHTML = `
-    <div class="flex gap-3 max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'}">
-      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isUser ? 'bg-orange-500 text-white' : 'bg-slate-700 text-orange-400'}">
+    <div class="flex gap-2.5 max-w-[90%] md:max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'}">
+      <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isUser ? 'bg-orange-500 text-white' : 'bg-slate-700 text-orange-400'}">
         <i class="fa-solid ${isUser ? 'fa-user' : 'fa-brain'}"></i>
       </div>
-      <div class="p-3.5 rounded-2xl ${isUser ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-gray-100 rounded-tl-none prose dark:prose-invert'} text-sm shadow-sm">
+      <div class="p-3 rounded-2xl ${isUser ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-gray-100 rounded-tl-none prose dark:prose-invert'} text-sm shadow-sm overflow-hidden">
         ${isUser ? content : marked.parse(content)}
       </div>
     </div>
@@ -139,8 +159,8 @@ function appendTyping() {
   typingDiv.id = 'typing-indicator';
   typingDiv.className = 'flex justify-start mb-4';
   typingDiv.innerHTML = `
-    <div class="flex gap-3 items-center">
-      <div class="w-8 h-8 rounded-full bg-slate-700 text-orange-400 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-brain"></i></div>
+    <div class="flex gap-2.5 items-center">
+      <div class="w-7 h-7 rounded-full bg-slate-700 text-orange-400 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-brain"></i></div>
       <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 p-3 rounded-2xl rounded-tl-none flex items-center space-x-1.5 shadow-sm">
         <span class="w-2 h-2 bg-orange-500 rounded-full typing-dot"></span>
         <span class="w-2 h-2 bg-orange-500 rounded-full typing-dot"></span>
@@ -166,7 +186,6 @@ async function fetchGroqResponse(userText) {
     chat = chats.find(c => c.id === currentChatId);
   }
 
-  // Đặt tiêu đề nếu đây là câu hỏi đầu tiên
   if (chat.messages.length === 1) {
     chat.title = generateTitle(userText);
     currentChatTitle.innerText = chat.title;
@@ -214,7 +233,6 @@ async function fetchGroqResponse(userText) {
   }
 }
 
-// Khởi chạy khi mở trang web
 if (chats.length === 0) {
   createNewChat();
 } else {
