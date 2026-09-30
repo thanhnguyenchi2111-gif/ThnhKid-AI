@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chatbot - Groq GPT-OSS</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { groq: { 500: '#f97316', 600: '#ea580c' } } } }
+    }
+  </script>
+
+  <!-- FontAwesome & Markdown & Code Highlight -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+  <!-- File CSS Tách Riêng -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100 min-h-screen flex font-sans overflow-hidden">
+
+  <!-- SIDEBAR BÊN TRÁI LƯU LỊCH SỬ CÁC CHỦ ĐỀ -->
+  <aside id="sidebar" class="w-64 bg-gray-100 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col justify-between shrink-0 transition-all duration-300">
+    <div class="p-3 flex flex-col h-full">
+      <!-- Nút Tạo Chat Mới -->
+      <button id="btn-new-chat" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm transition mb-4">
+        <i class="fa-solid fa-plus text-sm"></i>
+        <span>Đoạn chat mới</span>
+      </button>
+
+      <!-- Danh sách lịch sử chủ đề -->
+      <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 px-2 mb-2 uppercase tracking-wider">Lịch sử trò chuyện</div>
+      <div id="history-list" class="flex-1 overflow-y-auto space-y-1 pr-1">
+        <!-- Các chủ đề được tự động thêm bằng JS -->
+      </div>
+    </div>
+
+    <!-- Nút Đổi Giao Diện Sáng/Tối bên dưới Sidebar -->
+    <div class="p-3 border-t border-gray-200 dark:border-slate-700 flex justify-between items-center">
+      <span class="text-xs text-gray-500">Giao diện</span>
+      <button id="btn-theme" class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-moon text-base dark:hidden"></i>
+        <i class="fa-solid fa-sun text-base hidden dark:block"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- KHUNG CHAT CHÍNH BÊN PHẢI -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 p-3.5 flex justify-between items-center z-10 shadow-sm">
+      <div class="flex items-center space-x-3">
+        <button id="btn-toggle-sidebar" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div>
+          <h1 id="current-chat-title" class="font-bold text-base leading-tight truncate max-w-xs sm:max-w-md">Đoạn chat mới</h1>
+          <p class="text-xs text-gray-500 dark:text-gray-400">GPT-OSS 120B (Free API)</p>
+        </div>
+      </div>
+
+      <button id="btn-delete-current" class="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30" title="Xóa cuộc trò chuyện này">
+        <i class="fa-solid fa-trash text-base"></i>
+      </button>
+    </header>
+
+    <!-- Khu vực hiển thị tin nhắn -->
+    <main class="flex-1 p-4 overflow-y-auto flex flex-col max-w-4xl w-full mx-auto" id="chat-container">
+      <div id="chat-messages" class="flex-1 space-y-4 mb-4">
+        <div id="welcome-box" class="text-center py-16 space-y-4">
+          <div class="w-16 h-16 bg-orange-100 dark:bg-orange-950/50 text-orange-500 rounded-full flex items-center justify-center mx-auto text-3xl">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <h2 class="text-2xl font-bold">Xin chào! Bạn cần hỗ trợ chủ đề gì hôm nay?</h2>
+          <p class="text-gray-500 text-sm max-w-md mx-auto">Nhập câu hỏi bất kỳ, cuộc trò chuyện sẽ tự động được lưu tên chủ đề vào thanh danh sách bên trái!</p>
+        </div>
+      </div>
+
+      <!-- Ô nhập câu hỏi -->
+      <div class="sticky bottom-0 bg-gray-50 dark:bg-slate-900 pt-2">
+        <form id="chat-form" class="relative bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-lg focus-within:ring-2 focus-within:ring-orange-500">
+          <textarea id="user-input" rows="1" placeholder="Nhắn tin cho AI..." class="w-full pl-4 pr-12 py-3.5 bg-transparent resize-none focus:outline-none text-sm" style="min-height: 52px;"></textarea>
+          <button type="submit" id="btn-send" class="absolute right-2.5 bottom-2.5 w-8 h-8 bg-orange-500 text-white rounded-xl flex items-center justify-center hover:bg-orange-600 transition">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- File JavaScript Tách Riêng -->
+  <script src="script.js"></script>
+</body>
+</html>
